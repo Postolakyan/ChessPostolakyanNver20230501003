@@ -291,7 +291,7 @@ namespace Chess
             }
             if (!secondisvalid)
             {
-                Console.WriteLine("The Second Coordinate is not Valid Please insert Valid coordination ");
+                Console.WriteLine("The Second Coordinate is not Valid Please insert Valid coordination. ");
             }
             if (firstisvalid && secondisvalid)
             {
