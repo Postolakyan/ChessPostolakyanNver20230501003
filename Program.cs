@@ -2,6 +2,8 @@
 using System.ComponentModel;
 using System;
 using System.Linq;
+using System.Text.Json.Serialization.Metadata;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Chess
 {
@@ -27,7 +29,18 @@ namespace Chess
         /// <summary>
         ///  // The main entry point for the program
         /// </summary>
-        public static void RunTheProgramm ()
+        /// 
+
+        public enum Figures
+        {
+            King,
+            Queen,
+            KNights,
+            Rook,
+            Bishop
+        }
+
+        public static void RunTheProgramm()
         {
             bool exit = false;
             while (!exit)
@@ -51,13 +64,13 @@ namespace Chess
         /// <summary>
         /// // Draw the chessboard and get user input
         /// </summary>
-        public static void Draw() 
+        public static void Draw()
         {
-            Console.CursorLeft = 3; 
+            Console.CursorLeft = 3;
             string data = "ABCDEFGH";
             List<char> latterslist = new List<char>();
             latterslist.AddRange(data);
-            string numbers = "12345678";
+            string numbers = "01234567";
             List<char> numberslist = new List<char>();
             numberslist.AddRange(numbers);
             Console.ForegroundColor = ConsoleColor.DarkYellow;
@@ -67,7 +80,7 @@ namespace Chess
                 Console.Write($" {c} ");
             }
             Console.WriteLine("");
-            Console.CursorTop = 1; 
+            Console.CursorTop = 1;
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Write("------------------------------");
             Console.WriteLine("");
@@ -80,12 +93,20 @@ namespace Chess
                 Console.WriteLine(nums[i]);
             }
             DrawEdges(2, 2);
-            DrawEdges(2, 28); 
-            Console.CursorTop = 10; 
+            DrawEdges(2, 28);
+            Console.CursorTop = 10;
             Console.Write("------------------------------");
             CreateBoard(); // Initialize the chessboard and print it
             var input = InputCoordinations(latterslist, numberslist, out int firstindex, out int secondindex);
-            ReplaceFigure(CreateBoard(), firstindex, secondindex, input); // Update the chessboard with the selected figure
+            if (input == 'B' || input == 'b')
+            {
+               BishopSteps(firstindex-1,secondindex-1,CreateBoard());
+            }
+            else
+            {
+            var board = ReplaceFigure(CreateBoard(), firstindex, secondindex, input); // Update the chessboard with the selected figure
+             PrintBoard(board);
+            }
         }
         /// <summary>
          /// // Draw vertical borders on the chessboard
@@ -136,8 +157,7 @@ namespace Chess
         public static void PrintBoard(char[,] matrix)
         {
             Console.CursorTop = 2;
-
-
+            
             for (int i = 0; i < 8; i++)
             {
                 Console.CursorLeft = 3;
@@ -145,7 +165,7 @@ namespace Chess
                 {
                     if (matrix[i,j]=='#')
                     {
-                        Console.BackgroundColor= ConsoleColor.Red;
+                        Console.BackgroundColor = ConsoleColor.Red;
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write($" {matrix[i, j]} ");
                         Console.BackgroundColor = ConsoleColor.Black;
@@ -159,11 +179,22 @@ namespace Chess
                         Console.BackgroundColor = ConsoleColor.Black;
 
                     }
+                    else if (matrix[i, j] == '*')
+                    {
+                        Console.BackgroundColor = ConsoleColor.Black;
+                        Console.ForegroundColor = ConsoleColor.DarkBlue;
+                        Console.Write($" {matrix[i, j]} ");
+                        Console.BackgroundColor = ConsoleColor.Black;
+
+                    }
                     else
                     {
-                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.BackgroundColor = ConsoleColor.Black;
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write($" {matrix[i, j]} ");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.BackgroundColor = ConsoleColor.Black;
+
+
                     }
                 }
                 Console.WriteLine("");
@@ -268,6 +299,9 @@ namespace Chess
         {
             firstelement = char.ToUpper(firstelement);
             secondelement =  char.ToUpper(secondelement);
+            int second_element = secondelement - '0';
+            second_element--;
+            char.TryParse(second_element.ToString(),out secondelement);
             bool firstisvalid = false;
             bool secondisvalid = false;
             foreach (var item in letters)
@@ -309,7 +343,7 @@ namespace Chess
               if (figures.ContainsKey(figure))
               {
                 isvalid = true;
-            }
+              }
             else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -328,10 +362,61 @@ namespace Chess
            
                 return isvalid;
         }
-        public static void ReplaceFigure(char[,] board, int firstindex, int secondindex, char figure)
+        public static char [,]  ReplaceFigure(char[,] board, int firstindex, int secondindex, char figure)
         {
             board[ secondindex - 1, firstindex - 1] = figure;
-            PrintBoard(board);
+            return board;
+        }
+
+
+
+        public static void BishopSteps(int first_coordination, int second_coordination, char[,] board)
+        {
+            int current_position_of_first = first_coordination;
+            int current_position_of_second = second_coordination;
+            int constant_first_coordination = first_coordination;
+            int constant_second_coordination = second_coordination;
+            int sum_of_coordinations = current_position_of_first + current_position_of_second;
+            int sumplus = sum_of_coordinations + 2;
+           
+            for (int i = 0; i < board.GetLength(0); i++)
+            {
+                int i_plus_one = i + 1;
+                for (int j = 0; j < board.GetLength(1); j++)
+                {
+                    int j_plus_one = j + 1;
+                    if (i + j == sum_of_coordinations && i != constant_first_coordination && j != constant_second_coordination)
+                    {
+                        ReplaceFigure(board, i + 1, j + 1, '*');
+                    }
+                    if (i_plus_one + j_plus_one == sumplus && i_plus_one == current_position_of_first + 1 && j_plus_one == current_position_of_second + 1 )
+                    {
+                        ReplaceFigure(board, i_plus_one, j_plus_one, '*');
+                        sumplus += 2;
+                        current_position_of_first++;
+                        current_position_of_second++;
+                    }
+                }
+            }
+            for (int i = board.GetLength(0); i >= 0; i--)
+            {
+                for (int j = board.GetLength(0); j >= 0; j--)
+                {
+                    if ((i+j)+2 == sum_of_coordinations && i+1 == first_coordination && j+1 == second_coordination )
+                    {
+                        ReplaceFigure(board, i+1, j+1, '*');
+                        sum_of_coordinations -= 2;
+                        first_coordination--;
+                        second_coordination--;
+                    }else if ((i + j) == 0 && i + 1 == first_coordination && j + 1 == second_coordination)
+                    {
+                        ReplaceFigure(board, i + 1, j + 1, '*');
+                    }
+                }
+            }
+                ReplaceFigure(board, constant_first_coordination +1, constant_second_coordination+1, 'B');
+                PrintBoard(board);
+          
         }
         static void Main(string[] args)
         {
